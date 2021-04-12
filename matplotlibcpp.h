@@ -1220,6 +1220,53 @@ bool boxplot(const std::vector<Numeric>& data,
 template <typename Numeric>
 bool bar(const std::vector<Numeric> &               x,
          const std::vector<Numeric> &               y,
+         const std::vector<Numeric> &               bottom,
+         double                                     width    = 0.8,
+         std::string                                ec       = "black",
+         std::string                                ls       = "-",
+         double                                     lw       = 1.0,
+         const std::map<std::string, std::string> & keywords = {})
+{
+  detail::_interpreter::get();
+
+  PyObject * xarray = detail::get_array(x);
+  PyObject * yarray = detail::get_array(y);
+  PyObject*  obj_width = PyFloat_FromDouble(width);
+  PyObject * bottomarray = detail::get_array(bottom);
+
+  PyObject * kwargs = PyDict_New();
+
+  PyDict_SetItemString(kwargs, "ec", PyString_FromString(ec.c_str()));
+  PyDict_SetItemString(kwargs, "ls", PyString_FromString(ls.c_str()));
+  PyDict_SetItemString(kwargs, "lw", PyFloat_FromDouble(lw));
+
+  for (std::map<std::string, std::string>::const_iterator it =
+         keywords.begin();
+       it != keywords.end();
+       ++it) {
+    PyDict_SetItemString(
+      kwargs, it->first.c_str(), PyUnicode_FromString(it->second.c_str()));
+  }
+
+  PyObject * plot_args = PyTuple_New(4);
+  PyTuple_SetItem(plot_args, 0, xarray);
+  PyTuple_SetItem(plot_args, 1, yarray);
+  PyTuple_SetItem(plot_args, 2, obj_width);
+  PyTuple_SetItem(plot_args, 3, bottomarray);
+
+  PyObject * res = PyObject_Call(
+    detail::_interpreter::get().s_python_function_bar, plot_args, kwargs);
+
+  Py_DECREF(plot_args);
+  Py_DECREF(kwargs);
+  if (res) Py_DECREF(res);
+
+  return res;
+}
+
+template <typename Numeric>
+bool bar(const std::vector<Numeric> &               x,
+         const std::vector<Numeric> &               y,
          std::string                                ec       = "black",
          std::string                                ls       = "-",
          double                                     lw       = 1.0,
